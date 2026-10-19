@@ -1,0 +1,17 @@
+{
+    "name": "php-baremetal/php-sqlite3",
+    "description": "PHP's sqlite3 extension (the SQLite3 class) for php-baremetal firmware.",
+    "type": "bm-php-ext",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Gianfrancesco Aurecchia",
+            "email": "gianfri@aurecchia.com"
+        }
+    ],
+    "extra": {
+        "baremetal": {
+            "php-ext": "sqlite3"
+        }
+    }
+}

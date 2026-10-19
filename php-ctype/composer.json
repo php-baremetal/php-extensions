@@ -1,0 +1,17 @@
+{
+    "name": "php-baremetal/php-ctype",
+    "description": "PHP's ctype extension (ctype_digit, ctype_alpha, ...) for php-baremetal firmware.",
+    "type": "bm-php-ext",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Gianfrancesco Aurecchia",
+            "email": "gianfri@aurecchia.com"
+        }
+    ],
+    "extra": {
+        "baremetal": {
+            "php-ext": "ctype"
+        }
+    }
+}

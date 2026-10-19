@@ -1,0 +1,17 @@
+{
+    "name": "php-baremetal/php-session",
+    "description": "PHP's session extension (session_start, $_SESSION) for php-baremetal firmware.",
+    "type": "bm-php-ext",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Gianfrancesco Aurecchia",
+            "email": "gianfri@aurecchia.com"
+        }
+    ],
+    "extra": {
+        "baremetal": {
+            "php-ext": "session"
+        }
+    }
+}

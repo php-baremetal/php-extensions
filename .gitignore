@@ -1,0 +1,15 @@
+# Composer: the packages ship no dependencies or lock file
+vendor/
+composer.lock
+
+# build output (publish.sh writes zips to OUT_DIR or a temp dir) and local php-baremetal state
+*.zip
+build/
+.phpbm/
+node_modules/
+
+# local and editor files
+.env
+.idea/
+.vscode/
+.DS_Store

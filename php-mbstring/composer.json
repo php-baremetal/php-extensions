@@ -1,0 +1,17 @@
+{
+    "name": "php-baremetal/php-mbstring",
+    "description": "PHP's mbstring extension (multibyte strings, encoding conversion, optional mb_ereg) for php-baremetal firmware.",
+    "type": "bm-php-ext",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Gianfrancesco Aurecchia",
+            "email": "gianfri@aurecchia.com"
+        }
+    ],
+    "extra": {
+        "baremetal": {
+            "php-ext": "mbstring"
+        }
+    }
+}

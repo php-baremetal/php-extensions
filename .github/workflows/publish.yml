@@ -1,0 +1,92 @@
+name: publish
+
+on:
+  push:
+    tags: ['php-*/v[0-9]+.[0-9]+.[0-9]+*']
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Package to publish
+        type: choice
+        required: true
+        options:
+          - php-bcmath
+          - php-ctype
+          - php-date
+          - php-filter
+          - php-mbstring
+          - php-opcache
+          - php-openssl
+          - php-pdo
+          - php-pdo_sqlite
+          - php-session
+          - php-sqlite3
+          - php-tokenizer
+          - php-zlib
+      version:
+        description: Version to publish (X.Y.Z or X.Y.Z-alphaN/-betaN/-RCN, no leading v)
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      package: ${{ steps.target.outputs.package }}
+      version: ${{ steps.target.outputs.version }}
+    steps:
+      - name: Work out package and version
+        id: target
+        env:
+          EVENT: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_PACKAGE: ${{ inputs.package }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [[ "$EVENT" == "push" ]]; then
+            # tag php-<name>/vX.Y.Z
+            if ! [[ "$REF_NAME" =~ ^(php-[a-z0-9_]+)/v(.+)$ ]]; then
+              echo "::error::tag '$REF_NAME' is not php-<name>/v<semver>"
+              exit 1
+            fi
+            package="${BASH_REMATCH[1]}"
+            version="${BASH_REMATCH[2]}"
+          else
+            package="$INPUT_PACKAGE"
+            version="${INPUT_VERSION#v}"
+          fi
+          semver='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(alpha|beta|RC)(\.?[0-9]+)?)?$'
+          if ! [[ "$version" =~ $semver ]]; then
+            echo "::error::version '$version' is not X.Y.Z or X.Y.Z-alphaN/-betaN/-RCN (semver that Composer and Packagist accept)"
+            exit 1
+          fi
+          echo "package=$package" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+
+  publish:
+    needs: prepare
+    runs-on: ubuntu-latest
+    # one upload at a time per package
+    concurrency:
+      group: publish-${{ needs.prepare.outputs.package }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.4'
+          tools: composer
+          coverage: none
+
+      - name: Build, validate and upload
+        env:
+          REGISTRY_URL: ${{ vars.REGISTRY_URL || 'https://repository.php-baremetal.com' }}
+          REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+          PACKAGE: ${{ needs.prepare.outputs.package }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: .github/scripts/publish.sh "$PACKAGE" "$VERSION"

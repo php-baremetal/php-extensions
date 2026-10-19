@@ -1,0 +1,17 @@
+{
+    "name": "php-baremetal/php-filter",
+    "description": "PHP's filter extension (filter_var, filter_input) for php-baremetal firmware.",
+    "type": "bm-php-ext",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Gianfrancesco Aurecchia",
+            "email": "gianfri@aurecchia.com"
+        }
+    ],
+    "extra": {
+        "baremetal": {
+            "php-ext": "filter"
+        }
+    }
+}

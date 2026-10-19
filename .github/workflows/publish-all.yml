@@ -1,0 +1,70 @@
+name: publish-all
+
+# Tag all/X.Y.Z (or all/vX.Y.Z) to publish every package at that version: each one is uploaded, gets its own
+# php-<name>/vX.Y.Z tag, and the all/ tag is deleted at the end. Packages whose tag already exists are skipped.
+# Tags pushed with GITHUB_TOKEN do not start other workflows, so publish.yml does not upload them again.
+
+on:
+  push:
+    tags: ['all/*']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-all
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+
+      - name: Work out the version
+        id: target
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          version="${REF_NAME#all/}"
+          version="${version#v}"
+          semver='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(alpha|beta|RC)(\.?[0-9]+)?)?$'
+          if ! [[ "$version" =~ $semver ]]; then
+            echo "::error::tag '$REF_NAME' is not all/X.Y.Z or all/X.Y.Z-alphaN/-betaN/-RCN"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.4'
+          tools: composer
+          coverage: none
+
+      - name: Publish and tag every package
+        env:
+          REGISTRY_URL: ${{ vars.REGISTRY_URL || 'https://repository.php-baremetal.com' }}
+          REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+          VERSION: ${{ steps.target.outputs.version }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # alphabetical order keeps php-pdo before php-pdo_sqlite, which requires it
+          for dir in php-*/; do
+            package="${dir%/}"
+            tag="$package/v$VERSION"
+            if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
+              echo "::notice::$tag already exists: $package skipped"
+              continue
+            fi
+            .github/scripts/publish.sh "$package" "$VERSION"
+            git tag -a "$tag" -m "release $VERSION" "$GITHUB_SHA"
+            git push origin "refs/tags/$tag"
+          done
+
+      - name: Delete the all/ tag
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: git push origin ":refs/tags/$REF_NAME"

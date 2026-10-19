@@ -1,0 +1,20 @@
+{
+    "name": "php-baremetal/php-pdo_sqlite",
+    "description": "PHP's pdo_sqlite extension (PDO driver for SQLite databases) for php-baremetal firmware.",
+    "type": "bm-php-ext",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Gianfrancesco Aurecchia",
+            "email": "gianfri@aurecchia.com"
+        }
+    ],
+    "require": {
+        "php-baremetal/php-pdo": "^1.0"
+    },
+    "extra": {
+        "baremetal": {
+            "php-ext": "pdo_sqlite"
+        }
+    }
+}

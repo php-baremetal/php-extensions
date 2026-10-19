@@ -1,0 +1,17 @@
+{
+    "name": "php-baremetal/php-tokenizer",
+    "description": "PHP's tokenizer extension (token_get_all, PhpToken) for php-baremetal firmware.",
+    "type": "bm-php-ext",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Gianfrancesco Aurecchia",
+            "email": "gianfri@aurecchia.com"
+        }
+    ],
+    "extra": {
+        "baremetal": {
+            "php-ext": "tokenizer"
+        }
+    }
+}
