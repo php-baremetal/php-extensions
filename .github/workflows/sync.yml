@@ -1,0 +1,78 @@
+name: sync
+
+# Started by hand: uploads every php-<name>/vX.Y.Z tag of every package to the registry, oldest first, creating
+# the package or the version when missing and replacing it when it is already there.
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Package to sync (all = every package)
+        type: choice
+        default: all
+        options:
+          - all
+          - php-bcmath
+          - php-ctype
+          - php-date
+          - php-filter
+          - php-mbstring
+          - php-opcache
+          - php-openssl
+          - php-pdo
+          - php-pdo_sqlite
+          - php-session
+          - php-sqlite3
+          - php-tokenizer
+          - php-zlib
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.4'
+          tools: composer
+          coverage: none
+
+      - name: Upload every tagged version
+        env:
+          REGISTRY_URL: ${{ vars.REGISTRY_URL || 'https://repository.php-baremetal.com' }}
+          REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+          ONLY: ${{ inputs.package }}
+        run: |
+          # the script of the current branch, run against each tag's checkout
+          cp .github/scripts/publish.sh "$RUNNER_TEMP/publish.sh"
+          failed=0
+          # alphabetical order keeps php-pdo before php-pdo_sqlite, which requires it
+          for dir in php-*/; do
+            package="${dir%/}"
+            [[ "$ONLY" == "all" || "$ONLY" == "$package" ]] || continue
+            tags="$(git tag --list "$package/v*" --sort=v:refname)"
+            if [[ -z "$tags" ]]; then
+              echo "::notice::$package has no $package/vX.Y.Z tag: skipped"
+              continue
+            fi
+            for tag in $tags; do
+              tree="$RUNNER_TEMP/tree"
+              git worktree add --quiet --detach "$tree" "$tag"
+              if ! PUBLISH_ROOT="$tree" "$RUNNER_TEMP/publish.sh" "$package" "${tag#"$package/"}"; then
+                echo "::error::$package $tag was not synced"
+                failed=1
+              fi
+              git worktree remove --force "$tree"
+            done
+          done
+          exit $failed

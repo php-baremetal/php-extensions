@@ -47,6 +47,10 @@ whose tag already exists are skipped.
 git tag all/1.0.0 && git push origin all/1.0.0
 ```
 
+To bring the registry back in line with the tags (for example after a registry reset), run the `sync` workflow
+by hand (Actions, sync, Run workflow): it uploads every `php-<name>/vX.Y.Z` tag of every package, oldest first,
+creating missing versions and replacing existing ones. It can also be limited to one package.
+
 To publish from a shell, or to check a zip without uploading:
 
 ```sh

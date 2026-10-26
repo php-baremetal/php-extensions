@@ -11,6 +11,7 @@
 #   REGISTRY_REPOSITORY  optional: upload to {REGISTRY_URL}/r/{repository}/... instead of the root repository
 #   REGISTRY_TOKEN       token with the repository:write ability (not needed with --dry-run)
 #   OUT_DIR              where the zip is written (default: a temporary directory)
+#   PUBLISH_ROOT         checkout to take the package from (default: this repository)
 set -euo pipefail
 
 package="${1:-}"
@@ -24,7 +25,7 @@ if [[ -z "$package" || -z "$version" ]]; then
 fi
 
 version="${version#v}"
-root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+root="${PUBLISH_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 registry="${REGISTRY_URL:-https://repository.php-baremetal.com}"
 registry="${registry%/}"
 
